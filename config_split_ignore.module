@@ -13,7 +13,7 @@ use Drupal\Core\Url;
 /**
  * Implements hook_form_FORM_ID_alter().
  */
-function config_split_ignore_form_config_split_edit_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+function config_split_ignore_form_config_split_edit_form_alter(&$form, FormStateInterface $form_state, $form_id) {
   /** @var \Drupal\Core\Config\Entity\ConfigEntityInterface $config_split */
   $config_split = $form_state->getFormObject()->getEntity();
 
@@ -111,8 +111,7 @@ function config_split_ignore_form_config_admin_import_form_alter(&$form, FormSta
       '#type' => 'table',
       '#header' => ['Config name', 'Action'],
       '#caption' => t('<h3>The following configuration entities are ignored due to the <a href="@url">Configuration Split Ignore Settings</a> and therefore not displayed in the list above</h3>', [
-        '@url' => Url::fromRoute('entity.config_split.collection')
-          ->toString()
+        '@url' => Url::fromRoute('entity.config_split.collection')->toString(),
       ]),
       '#rows' => $ignored_config_entities,
     ];
