@@ -4,6 +4,7 @@ namespace Drupal\config_split_ignore\Plugin\ConfigFilter;
 
 use Drupal\config_ignore\Plugin\ConfigFilter\IgnoreFilter;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Component\Utility\NestedArray;
 
 /**
  * Provides a ignore filter that allows to delete the configuration entities.
@@ -51,6 +52,54 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
       $plugin_definition,
       $container->get('config.storage')
     );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function activeRead($name, $data) {
+    $keys = [];
+    foreach ($this->configuration['ignored'] as $ignored) {
+      // Split the ignore settings so that we can ignore individual keys.
+      $ignored = explode(':', $ignored);
+      if (fnmatch($ignored[0], $name)) {
+        if (count($ignored) == 1) {
+          // If one of the definitions does not have keys ignore the
+          // whole config. If active configuration doesn't exist,
+          // allow to create it.
+          $active = $this->active->read($name);
+          return $active ? $active : $data;
+        }
+        else {
+          // Add the sub parts to ignore to the keys.
+          $keys[] = $ignored[1];
+        }
+      }
+
+    }
+
+    $active = $this->active->read($name);
+    if (!$active) {
+      return $data;
+    }
+    foreach ($keys as $key) {
+      $parts = explode('.', $key);
+
+      if (count($parts) == 1) {
+        if (isset($active[$key])) {
+          $data[$key] = $active[$key];
+        }
+      }
+      else {
+        $value = NestedArray::getValue($active, $parts, $key_exists);
+        if ($key_exists) {
+          // Enforce the value if it existed in the active config.
+          NestedArray::setValue($data, $parts, $value, TRUE);
+        }
+      }
+    }
+
+    return $data;
   }
 
   /**
