@@ -4,6 +4,7 @@ namespace Drupal\config_split_ignore\Plugin\ConfigFilter;
 
 use Drupal\config_ignore\Plugin\ConfigFilter\IgnoreFilter;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\Site\Settings;
 use Drupal\Component\Utility\NestedArray;
 
 /**
@@ -57,6 +58,33 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
   /**
    * {@inheritdoc}
    */
+  protected function matchConfigName($config_name) {
+    if (Settings::get('config_split_ignore_deactivate')) {
+      // Allow deactivating config_split_ignore in settings.php.
+      // Do not match any name in that case and allow
+      // a normal configuration import to happen.
+      return FALSE;
+    }
+
+    // If the string is an excluded config, don't ignore it.
+    if (in_array(static::FORCE_EXCLUSION_PREFIX . $config_name, $this->configuration['ignored'], TRUE)) {
+      return FALSE;
+    }
+
+    foreach ($this->configuration['ignored'] as $config_ignore_setting) {
+      // Split the ignore settings so that we can ignore individual keys.
+      $ignore = explode(':', $config_ignore_setting);
+      if (fnmatch($ignore[0], $config_name)) {
+        return TRUE;
+      }
+    }
+
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   protected function activeRead($name, $data) {
     $keys = [];
     foreach ($this->configuration['ignored'] as $ignored) {
@@ -65,7 +93,7 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
       if (fnmatch($ignored[0], $name)) {
         if (count($ignored) == 1) {
           // If one of the definitions does not have keys ignore the
-          // whole config. If active configuration doesn't exist,
+          // whole config. If the active configuration doesn't exist,
           // allow to create it.
           $active = $this->active->read($name);
           return $active ? $active : $data;
@@ -105,9 +133,16 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
   /**
    * {@inheritdoc}
    */
+  public function filterWrite($name, array $data) {
+    return $data;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function filterExists($name, $exists) {
-    // The ignored configuration entity must exist in a file in config folder
-    // in order to be deleted properly.
+    // The ignored configuration entity must exist in a file in
+    // config split folder in order to be deleted properly.
     return $exists;
   }
 
@@ -115,15 +150,23 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
    * {@inheritdoc}
    */
   public function filterListAll($prefix, array $data) {
+    // Allow to delete the configuration if the split becomes inactive.
     return $data;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function filterDelete($name, $delete) {
-    // Allow to delete the configuration is the split becomes inactive.
-    return $delete;
+  public function filterDeleteAll($prefix, $delete) {
+    // Support export time ignoring.
+    return !empty($this->configuration['ignored']) ? FALSE : $delete;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function filterGetAllCollectionNames(array $collections) {
+    return $collections;
   }
 
 }
