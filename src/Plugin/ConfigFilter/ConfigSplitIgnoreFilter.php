@@ -119,6 +119,7 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
         }
       }
       else {
+        $key_exists = FALSE;
         $value = NestedArray::getValue($active, $parts, $key_exists);
         if ($key_exists) {
           // Enforce the value if it existed in the active config.
@@ -167,6 +168,47 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
    */
   public function filterGetAllCollectionNames(array $collections) {
     return $collections;
+  }
+
+  /**
+   * Returns the list of ignored configuration names with their ignored keys.
+   */
+  public function getIgnoredKeys() {
+    if (empty($this->configuration['ignored'])) {
+      return [];
+    }
+
+    $active_names = $this->active->listAll();
+    $ignored_keys = [];
+
+    foreach ($this->configuration['ignored'] as $config_ignore_setting) {
+      $ignore = explode(':', $config_ignore_setting);
+      $ignore_name_pattern = $ignore[0];
+      $ignore_key = isset($ignore[1]) ? $ignore[1] : '';
+
+      foreach ($active_names as $config_name) {
+        if ($config_ignore_setting === (static::FORCE_EXCLUSION_PREFIX . $config_name)) {
+          continue;
+        }
+
+        if (fnmatch($ignore_name_pattern, $config_name)) {
+          $ignored_keys[$config_name][$ignore_key] = TRUE;
+        }
+      }
+    }
+
+    foreach (array_keys($ignored_keys) as $ignore_name) {
+      if (isset($ignored_keys[$ignore_name][''])) {
+        // The whole configuration entity is ignored.
+        $ignored_keys[$ignore_name] = [];
+      }
+      else {
+        // Just some keys are ignored.
+        $ignored_keys[$ignore_name] = array_keys($ignored_keys[$ignore_name]);
+      }
+    }
+
+    return $ignored_keys;
   }
 
 }
