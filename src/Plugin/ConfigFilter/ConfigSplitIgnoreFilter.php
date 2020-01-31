@@ -73,7 +73,7 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
 
     foreach ($this->configuration['ignored'] as $config_ignore_setting) {
       // Split the ignore settings so that we can ignore individual keys.
-      $ignore = explode(':', $config_ignore_setting);
+      $ignore = explode(':', $config_ignore_setting, 2);
       if (fnmatch($ignore[0], $config_name)) {
         return TRUE;
       }
@@ -89,7 +89,7 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
     $keys = [];
     foreach ($this->configuration['ignored'] as $ignored) {
       // Split the ignore settings so that we can ignore individual keys.
-      $ignored = explode(':', $ignored);
+      $ignored = explode(':', $ignored, 2);
       if (fnmatch($ignored[0], $name)) {
         if (count($ignored) == 1) {
           // If one of the definitions does not have keys ignore the
@@ -182,7 +182,7 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
     $ignored_keys = [];
 
     foreach ($this->configuration['ignored'] as $config_ignore_setting) {
-      $ignore = explode(':', $config_ignore_setting);
+      $ignore = explode(':', $config_ignore_setting, 2);
       $ignore_name_pattern = $ignore[0];
       $ignore_key = isset($ignore[1]) ? $ignore[1] : '';
 
