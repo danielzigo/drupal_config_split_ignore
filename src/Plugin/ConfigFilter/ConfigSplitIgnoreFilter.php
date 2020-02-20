@@ -56,6 +56,23 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
   }
 
   /**
+   * Checks if a string matches a given wildcard pattern.
+   *
+   * @param $pattern
+   *   The wildcard pattern to me matched.
+   * @param $string
+   *   The string to be checked.
+   *
+   * @return bool
+   *   TRUE if $string string matches the $pattern pattern.
+   */
+  protected function stringMatch($pattern, $string) {
+    $pattern = '/^' . preg_quote($pattern, '/') . '$/';
+    $pattern = str_replace('\*', '.*', $pattern);
+    return (bool) preg_match($pattern, $string);
+  }
+
+  /**
    * {@inheritdoc}
    */
   protected function matchConfigName($config_name) {
@@ -74,7 +91,7 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
     foreach ($this->configuration['ignored'] as $config_ignore_setting) {
       // Split the ignore settings so that we can ignore individual keys.
       $ignore = explode(':', $config_ignore_setting, 2);
-      if (fnmatch($ignore[0], $config_name)) {
+      if ($this->stringMatch($ignore[0], $config_name)) {
         return TRUE;
       }
     }
@@ -90,7 +107,7 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
     foreach ($this->configuration['ignored'] as $ignored) {
       // Split the ignore settings so that we can ignore individual keys.
       $ignored = explode(':', $ignored, 2);
-      if (fnmatch($ignored[0], $name)) {
+      if ($this->stringMatch($ignored[0], $name)) {
         if (count($ignored) == 1) {
           // If one of the definitions does not have keys ignore the
           // whole config. If the active configuration doesn't exist,
@@ -191,7 +208,7 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
           continue;
         }
 
-        if (fnmatch($ignore_name_pattern, $config_name)) {
+        if ($this->stringMatch($ignore_name_pattern, $config_name)) {
           $ignored_keys[$config_name][$ignore_key] = TRUE;
         }
       }
