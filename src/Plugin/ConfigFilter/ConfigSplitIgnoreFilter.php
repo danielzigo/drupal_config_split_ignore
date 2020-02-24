@@ -13,7 +13,7 @@ use Drupal\Component\Utility\NestedArray;
  * @ConfigFilter(
  *   id = "config_split_ignore",
  *   label = "Configuration Split Ignore",
- *   weight = 20
+ *   weight = 30000
  * )
  */
 class ConfigSplitIgnoreFilter extends IgnoreFilter {
