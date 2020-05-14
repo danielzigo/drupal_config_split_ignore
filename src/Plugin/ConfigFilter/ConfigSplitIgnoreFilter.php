@@ -18,6 +18,8 @@ use Drupal\Component\Utility\NestedArray;
  */
 class ConfigSplitIgnoreFilter extends IgnoreFilter {
 
+  const DELETION_PREFIX = '!';
+
   /**
    * {@inheritdoc}
    */
@@ -88,6 +90,11 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
       return FALSE;
     }
 
+    // If the string is a deleted config, don't ignore it.
+    if (in_array(static::DELETION_PREFIX . $config_name, $this->configuration['ignored'], TRUE)) {
+      return FALSE;
+    }
+
     foreach ($this->configuration['ignored'] as $config_ignore_setting) {
       // Split the ignore settings so that we can ignore individual keys.
       $ignore = explode(':', $config_ignore_setting, 2);
@@ -105,6 +112,9 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
   protected function activeRead($name, $data) {
     $keys = [];
     foreach ($this->configuration['ignored'] as $ignored) {
+      if (strpos($ignored, static::DELETION_PREFIX) === 0) {
+        continue;
+      }
       // Split the ignore settings so that we can ignore individual keys.
       $ignored = explode(':', $ignored, 2);
       if ($this->stringMatch($ignored[0], $name)) {
@@ -120,7 +130,6 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
           $keys[] = $ignored[1];
         }
       }
-
     }
 
     $active = $this->active->read($name);
@@ -159,6 +168,11 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
    * {@inheritdoc}
    */
   public function filterExists($name, $exists) {
+    // If the name is a deleted config, treat it as not existing.
+    if (in_array(static::DELETION_PREFIX . $name, $this->configuration['ignored'], TRUE)) {
+      return FALSE;
+    }
+
     // The ignored configuration entity must exist in a file in
     // config split folder in order to be deleted properly.
     return $exists;
@@ -168,6 +182,13 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
    * {@inheritdoc}
    */
   public function filterListAll($prefix, array $data) {
+    foreach ($data as $key => $config_name) {
+      // If the name is a deleted config, treat it as not existing.
+      if (in_array(static::DELETION_PREFIX . $config_name, $this->configuration['ignored'], TRUE)) {
+        unset($data[$key]);
+      }
+    }
+
     // Allow to delete the configuration if the split becomes inactive.
     return $data;
   }
@@ -205,6 +226,10 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
 
       foreach ($active_names as $config_name) {
         if ($config_ignore_setting === (static::FORCE_EXCLUSION_PREFIX . $config_name)) {
+          continue;
+        }
+
+        if ($config_ignore_setting === (static::DELETION_PREFIX . $config_name)) {
           continue;
         }
 

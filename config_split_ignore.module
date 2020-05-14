@@ -23,6 +23,7 @@ Examples: <ul>
 <li>webform.webform.* (will ignore all config entities that starts with <em>webform.webform</em>)</li>
 <li>*.contact_message.custom_contact_form.* (will ignore all config entities that starts with <em>.contact_message.custom_contact_form.</em> like fields attached to a custom contact form)</li>
 <li>~webform.webform.contact (will force import for this configuration, even if ignored by a wildcard)</li>
+<li>!webform.webform.contact (will delete this configuration even if it is defined somewhere else)</li>
 <li>webform.webform.contact:title (will ignore the title of the webform, but will not ignore other webform.webform.contact configuration.)</li>
 </ul>');
 
