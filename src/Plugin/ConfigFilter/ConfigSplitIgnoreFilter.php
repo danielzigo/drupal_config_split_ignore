@@ -196,6 +196,18 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
   /**
    * {@inheritdoc}
    */
+  public function filterDelete($name, $delete) {
+    // If the name is a deleted config, do not remove it while exporting.
+    if ($delete && in_array(static::DELETION_PREFIX . $name, $this->configuration['ignored'], TRUE) && $this->source->exists($name)) {
+      return FALSE;
+    }
+
+    return $delete;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function filterDeleteAll($prefix, $delete) {
     // Support export time ignoring.
     return !empty($this->configuration['ignored']) ? FALSE : $delete;
