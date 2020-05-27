@@ -189,6 +189,13 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
       }
     }
 
+    if (!empty($this->getFilteredStorage()->getCollectionName())) {
+      // In collections, treat config as existing
+      // if it is ignored and exists in the active storage.
+      $active_names = $this->active->listAll($prefix);
+      $data = array_unique(array_merge($data, array_filter($active_names, [$this, 'matchConfigName'])));
+    }
+
     // Allow to delete the configuration if the split becomes inactive.
     return $data;
   }
@@ -211,13 +218,6 @@ class ConfigSplitIgnoreFilter extends IgnoreFilter {
   public function filterDeleteAll($prefix, $delete) {
     // Support export time ignoring.
     return !empty($this->configuration['ignored']) ? FALSE : $delete;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function filterGetAllCollectionNames(array $collections) {
-    return $collections;
   }
 
   /**
