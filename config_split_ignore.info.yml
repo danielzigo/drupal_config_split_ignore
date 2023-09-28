@@ -1,8 +1,7 @@
 name: Configuration Split Ignore
 type: module
 description: Ignores certain configuration owned by modules enabled in configuration splits during export and import
-core: 8.x
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^8 || ^9 || ^10
 package: Config
 dependencies:
   - config_ignore:config_ignore
